@@ -1,24 +1,25 @@
-require('./check-versions')()
-
-process.env.NODE_ENV = 'production'
-
+require('../config/check-versons')()
+// 用来控制台打印loading动画
 var ora = require('ora')
+// 用来删除文件操作
 var rm = require('rimraf')
 var path = require('path')
+// 控制台输出各种颜色
 var chalk = require('chalk')
 var webpack = require('webpack')
-var config = require('../config')
-var webpackConfig = require('./webpack.prod.conf')
+var config = require('../config/personal-config')
+var webpackConfig = require('./webpack.prod.config')
 
+//添加正在buildind的动画
 var spinner = ora('building for production...')
 spinner.start()
-
-rm(path.join(config.build.assetsRoot, config.build.assetsSubDirectory), err => {
+rm(config.build.path, err => {
   if (err) throw err
-  webpack(webpackConfig, function (err, stats) {
+  webpack(webpackConfig, function (err, status) {
     spinner.stop()
     if (err) throw err
-    process.stdout.write(stats.toString({
+		//编译OK则输出相关信息(只输出文件信息，其他全部false)
+    process.stdout.write(status.toString({
       colors: true,
       modules: false,
       children: false,

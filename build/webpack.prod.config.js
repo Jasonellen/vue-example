@@ -1,35 +1,33 @@
 var path = require('path')
-var utils = require('./utils')
+var loaders = require('../config/loaders')
 var webpack = require('webpack')
-var config = require('../config')
+var config = require('../config/personal-config')
 var merge = require('webpack-merge')
-var baseWebpackConfig = require('./webpack.base.conf')
+var baseWebpackConfig = require('./webpack.base.config')
 var CopyWebpackPlugin = require('copy-webpack-plugin')
 var HtmlWebpackPlugin = require('html-webpack-plugin')
 var ExtractTextPlugin = require('extract-text-webpack-plugin')
 var OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 
-var env = process.env.NODE_ENV === 'testing'
-  ? require('../config/test.env')
-  : config.build.env
-
 var webpackConfig = merge(baseWebpackConfig, {
   module: {
-    rules: utils.styleLoaders({
-      sourceMap: config.build.productionSourceMap,
-      extract: true
+    rules: loaders.styleLoaders({
+      sourceMap: config.build.cssSourceMap,
+      extract: config.build.extract
     })
   },
-  devtool: config.build.productionSourceMap ? '#source-map' : false,
+  devtool: false,
   output: {
-    path: config.build.assetsRoot,
-    filename: utils.assetsPath('js/[name].[chunkhash].js'),
-    chunkFilename: utils.assetsPath('js/[id].[chunkhash].js')
+		//产出路径，后面的路径都是根据这个来的
+    path: config.build.path,
+    filename: config.build.jsPath+'/[name].[chunkhash:7].js',
+    chunkFilename: config.build.jsPath+'/[name].[chunkhash:7].js'
   },
   plugins: [
-    // http://vuejs.github.io/vue-loader/en/workflow/production.html
+		//设置全局变量，比如npm start -> cross-env NODE_ENV=development这里只是将development传给了webpack
+		//process.env.NODE_ENV==‘development’仅在webpack中有用，在其他文件中无效，通过下面设为全局变量
     new webpack.DefinePlugin({
-      'process.env': env
+      'process.env.NODE_ENV': '"production"'
     }),
     new webpack.optimize.UglifyJsPlugin({
       compress: {
@@ -39,10 +37,11 @@ var webpackConfig = merge(baseWebpackConfig, {
     }),
     // extract css into its own file
     new ExtractTextPlugin({
-      filename: utils.assetsPath('css/[name].[contenthash].css')
+      filename: config.build.cssPath+'/[name].[contenthash:7].css'
     }),
     // Compress extracted CSS. We are using this plugin so that possible
     // duplicated CSS from different components can be deduped.
+    // 解决css重复的问题
     new OptimizeCSSPlugin({
       cssProcessorOptions: {
         safe: true
@@ -52,22 +51,22 @@ var webpackConfig = merge(baseWebpackConfig, {
     // you can customize output by editing /index.html
     // see https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
-      filename: process.env.NODE_ENV === 'testing'
-        ? 'index.html'
-        : config.build.index,
+      filename: config.build.index,
       template: 'index.html',
       inject: true,
       minify: {
-        removeComments: true,
-        collapseWhitespace: true,
-        removeAttributeQuotes: true
+        removeComments: true, //移除注释
+        collapseWhitespace: true, //换行被解析
+        removeAttributeQuotes: true //移除属性的双引号
         // more options:
         // https://github.com/kangax/html-minifier#options-quick-reference
       },
       // necessary to consistently work with multiple chunks via CommonsChunkPlugin
+      // 按chunks已依赖关系逐个插入，不然manifest在vender下就可能会报错
       chunksSortMode: 'dependency'
     }),
     // split vendor js into its own file
+		// 将entry下所有的模块的公共部分提取到一个通用的chunk中
     new webpack.optimize.CommonsChunkPlugin({
       name: 'vendor',
       minChunks: function (module, count) {
@@ -83,39 +82,24 @@ var webpackConfig = merge(baseWebpackConfig, {
     }),
     // extract webpack runtime and module manifest to its own file in order to
     // prevent vendor hash from being updated whenever app bundle is updated
+    // 生成manifest来检测依赖的插件是否有变动，如果变动了才重新生成vendor.js
     new webpack.optimize.CommonsChunkPlugin({
       name: 'manifest',
-      chunks: ['vendor']
+      chunks: ['vendor'] //依赖vendor
     }),
     // copy custom static assets
-    new CopyWebpackPlugin([
-      {
-        from: path.resolve(__dirname, '../static'),
-        to: config.build.assetsSubDirectory,
-        ignore: ['.*']
-      }
-    ])
+		//将根目录的static 拷贝到'static'中(outpath+static == dist/static)
+    // new CopyWebpackPlugin([
+    //   {
+    //     from: path.resolve(__dirname, '../static'),
+    //     to: config.build.assetsSubDirectory,
+    //     ignore: ['.*']
+    //   }
+    // ])
   ]
 })
 
-if (config.build.productionGzip) {
-  var CompressionWebpackPlugin = require('compression-webpack-plugin')
-
-  webpackConfig.plugins.push(
-    new CompressionWebpackPlugin({
-      asset: '[path].gz[query]',
-      algorithm: 'gzip',
-      test: new RegExp(
-        '\\.(' +
-        config.build.productionGzipExtensions.join('|') +
-        ')$'
-      ),
-      threshold: 10240,
-      minRatio: 0.8
-    })
-  )
-}
-
+//build完成后会在浏览器以可视化的形式展示使用了哪些文件，及大小
 if (config.build.bundleAnalyzerReport) {
   var BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin
   webpackConfig.plugins.push(new BundleAnalyzerPlugin())

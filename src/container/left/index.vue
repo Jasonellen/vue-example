@@ -2,7 +2,7 @@
   <div class="detail">
     <ul>
     	<li v-for="item in datas">
-    		<img src="../../assets/logo.png" alt="">
+    		<img src="static/logo.png" alt="">
 				<div class="right">
 					<i>${{item.price}}</i>
 					<button @click='incrementAction(item.id)'>+</button>
