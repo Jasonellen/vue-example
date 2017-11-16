@@ -42,7 +42,7 @@ const actions = {
 
 // mutations
 const mutations = {
-	increment (state, payload) {
+	increment(state, payload){
 		state.datas = payload
 	},
 	decrement (state, payload) {

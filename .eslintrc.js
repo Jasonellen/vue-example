@@ -10,7 +10,6 @@ module.exports = {
     browser: true
   },
   // https://github.com/feross/standard/blob/master/RULES.md#javascript-standard-style
-  'extends': 'standard',
   // required to lint *.vue files
   plugins: [
     'html'
@@ -29,6 +28,7 @@ module.exports = {
     'no-unused-vars': 1,
 		'eqeqeq': 0,
 		'no-new': 0,
-		'import/first':0
+		'import/first':0,
+    'comma-spacing':2
   }
 }
